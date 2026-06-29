@@ -104,6 +104,7 @@ act to clear. You can refuse to grow and stay safe, but the story can't be compl
 unless enough players eclose into the missing roles. Beliefs propagate between players,
 so one person's growth seeds another's. The evolved deck **carries to the next
 session** (legacy). *Character growth isn't flavor — it's the win condition.*
+**Full design: [Metamorphosis.md](Metamorphosis.md).**
 
 ---
 
