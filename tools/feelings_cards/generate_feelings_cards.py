@@ -43,6 +43,14 @@ POS_COLOR = "rgb(34, 139, 96)"     # positive valence  (north / NE-NW)
 NEG_COLOR = "rgb(168, 46, 58)"     # negative valence  (south / SE-SW)
 EYE_RED = "rgb(196, 60, 60)"       # the umwelt iris (matches eyeball.js --eyeball-red)
 
+# Per-type theming for the non-feeling Pulse card types (manifest color coding).
+GOLD = "rgb(176, 137, 43)"         # Story Track border / header
+GOLD_DK = "rgb(140, 104, 28)"
+BLUE = "rgb(38, 66, 120)"          # Character (deep blue)
+BLUE_DK = "rgb(26, 46, 86)"
+SLATE = "rgb(86, 92, 102)"         # Part (slate gray)
+SLATE_DK = "rgb(60, 64, 72)"
+
 CATEGORY_TINT = {
     "Feeling": "rgb(70, 120, 170)",
     "Emotion": "rgb(196, 118, 40)",
@@ -60,16 +68,11 @@ DECKS: dict[str, dict] = {
         "name": "Pulse",
         # Final "boxed game" lands here; instructions PDF is rendered from this rules file.
         "box": "../../games/pulse",
-        "instructions": "../../games/Pulse.md",
+        "instructions": "../../games/pulse/Pulse.md",
         "accent": (34, 139, 96),
-        "cards": [
-            # Story Track — the Hero's Arc, in beat order (Pulse.md §2.1)
-            "Serenity", "Unease", "Fear", "Grief", "Hope", "Joy",
-            # Hand near-neighbors (Pulse.md §2.4)
-            "Contentment", "Melancholy", "Frustration", "Excitement",
-            # Character dispositions as classes (Pulse.md §2.2)
-            "Curiosity", "Suspicion", "Compassion", "Equanimity", "Indifference",
-        ],
+        # The full 57-card print-and-play set (5 card types with copies) is built by
+        # build_pulse_jobs() from the PULSE_* tables below — see games/pulse/Pulse-Print-and-Play.md.
+        "composition": "pulse",
     },
     "metamorphosis": {
         "name": "Metamorphosis",
@@ -475,6 +478,245 @@ See the rules booklet for counts.
     (box_dir / "README.md").write_text(readme, encoding="utf-8")
 
 
+# --- Pulse deck composition (the full print-and-play set) ---------------------------
+# These tables mirror games/pulse/Pulse-Print-and-Play.md exactly. Feeling cards stay
+# TTDB-driven (rendered by card_front_svg); the other four types are synthesized here.
+
+# Story Track ×6 — Hero's Arc beats: (beat, name, lat, lon, valence, tagline, edge, stage, win)
+PULSE_STORY = [
+    (1, "Serenity", 10, -10, "pos", "A mild, quiet ease.", "deepens → Unease", "ordinary world", False),
+    (2, "Unease", -10, -10, "neg", "Something not quite right.", "resonates → Fear", "the call", False),
+    (3, "Fear", -30, 20, "neg", "Danger crystallizes and hijacks attention.", "intensifies → Grief", "the ordeal", False),
+    (4, "Grief", -30, -30, "neg", "What was loved is irreversibly gone.", "blooms → Hope", "the dark night", False),
+    (5, "Hope", 20, 20, "pos", "A possibility opens in the wreckage.", "blooms → Joy", "the turn", False),
+    (6, "Joy", 30, 30, "pos", "The self reconstituted and enlarged.", "reach here = WIN", "the return", True),
+]
+
+# Character ×5 — dispositions as classes: (name, disposition, lat, lon, reaches, strains, quote)
+PULSE_CHARS = [
+    ("THE SEEKER", "Curiosity", 10, 40, "Unease, Hope", "Grief", "A forward lean toward the unknown."),
+    ("THE WARDEN", "Suspicion", -20, -30, "Fear, Grief", "Joy", "Reading the world for hidden threat."),
+    ("THE HEALER", "Compassion", 30, 40, "Hope, Joy", "Fear", "Moved to care for another's suffering."),
+    ("THE HERMIT", "Equanimity", 30, -20, "Serenity, Grief", "Hope", "Holds joy and sorrow without overturning."),
+    ("THE TRICKSTER", "Indifference", -10, -40, "Fear, Unease", "Joy, Hope", "The world does not call to it."),
+]
+
+# Part ×8 — beat_mask, two copies each: (name, mask, line1, line2, copies)
+PULSE_PARTS = [
+    ("HI-HAT", [1, 2, 3, 4], "Timekeeper — every beat.", "The band's spine.", 2),
+    ("BACKBEAT", [2, 4], "The groove. Holds the bar", "during a Baton handoff.", 2),
+    ("LEAD", [1], "Sounds the story advance.", "Clean downbeat = Marker++", 2),
+    ("RIM", [3], "Offbeat accent. Covers", "the middle of the bar.", 2),
+]
+
+# Feeling ×32 — TTDB titles with copy counts (6 exact @4, 4 neighbors @2)
+PULSE_FEELINGS = [
+    ("Serenity", 4), ("Unease", 4), ("Fear", 4), ("Grief", 4), ("Hope", 4), ("Joy", 4),
+    ("Contentment", 2), ("Melancholy", 2), ("Frustration", 2), ("Excitement", 2),
+]
+
+# Reference ×6 — identical quick-reference card (condensed from Pulse.md §9)
+PULSE_REFERENCE = 6
+PULSE_REFERENCE_LINES = [
+    "A BAR = 4 metronome beats.",
+    "YOUR BEAT = your Part's beat_mask.",
+    "",
+    "ON YOUR BEAT, with the click:",
+    " play a Feeling that REACHES /",
+    " EDGES the required emotion.",
+    "  Reaches -> clean, +Swing token",
+    "  Strains -> +1 Drift",
+    "  miss/late/illegal -> -1 Pulse,",
+    "                       +1 Drift",
+    "  two on same beat   -> -1 Pulse",
+    "",
+    "CONDUCTOR (Baton): calls next",
+    " emotion on beat 4; must Reach.",
+    " Bust/strain -> hand baton to one",
+    " who Reaches; era +1. Backbeat",
+    " holds; new conductor counts in.",
+    "",
+    "DRIFT hits 3 -> Resync: skip a",
+    " bar, clear Drift, re-count.",
+    "SWING token: push/lay-back on",
+    " purpose -> clean + draw a card.",
+    "",
+    "WIN story: reach JOY, >=1 Pulse.",
+    "LOSE: Pulse hits 0.",
+    "WIN set: 3 stories, 60->80->100.",
+]
+
+
+def _compass_rec(lat: int, lon: int, intensity: str = "L3") -> dict:
+    """Minimal record so eyeball_compass can plot a node by lat/lon."""
+    return {"lat": lat, "lon": lon, "fields": {"Intensity": intensity}}
+
+
+def num_badge(label: str, cx: float, cy: float, r: float, fill: str, tcolor: str,
+              stroke: str = "white") -> str:
+    return (
+        f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="{fill}" stroke="{stroke}" stroke-width="3"/>'
+        f'<text x="{cx}" y="{cy + r*0.36:.1f}" font-size="{r*1.1:.0f}" fill="{tcolor}" '
+        f'text-anchor="middle" font-family="Arial" font-weight="bold">{label}</text>'
+    )
+
+
+def _card_open(border_color: str) -> str:
+    return (
+        f'<svg width="{CARD_WIDTH}" height="{CARD_HEIGHT}" xmlns="http://www.w3.org/2000/svg">\n'
+        f'  <rect x="5" y="5" width="{CARD_WIDTH-10}" height="{CARD_HEIGHT-10}" '
+        f'fill="{CREAM}" rx="{CARD_CORNER}" ry="{CARD_CORNER}"/>'
+    )
+
+
+def _card_close(border_color: str) -> str:
+    return (
+        f'  <rect x="5" y="5" width="{CARD_WIDTH-10}" height="{CARD_HEIGHT-10}" fill="none" '
+        f'stroke="{border_color}" stroke-width="10" rx="{CARD_CORNER}" ry="{CARD_CORNER}"/>\n</svg>\n'
+    )
+
+
+def story_front_svg(spec, db_name: str) -> str:
+    beat, name, lat, lon, val, tagline, edge, stage, win = spec
+    vcolor = POS_COLOR if val == "pos" else NEG_COLOR
+    name_size = 64 if len(name) <= 14 else 50
+    if win:
+        band = (
+            f'<rect x="30" y="952" width="{CARD_WIDTH-60}" height="78" fill="{GOLD_DK}" '
+            f'rx="{PAGE_CORNER}" ry="{PAGE_CORNER}"/>'
+            f'<text x="{CARD_WIDTH/2}" y="1002" font-size="34" fill="white" text-anchor="middle" '
+            f'font-family="Arial" font-weight="bold">★ REACH HERE = WIN</text>'
+        )
+    else:
+        band = (
+            f'<rect x="30" y="952" width="{CARD_WIDTH-60}" height="78" fill="{DARK_BAND_2}" '
+            f'rx="{PAGE_CORNER}" ry="{PAGE_CORNER}"/>'
+            f'<text x="{CARD_WIDTH/2}" y="1000" font-size="26" fill="white" text-anchor="middle" '
+            f'font-family="Arial">edge out: {xesc(edge)}</text>'
+        )
+    tag_lines, tag_f = fit_tagline(tagline)
+    tag_lh = round(tag_f * 1.28, 1)
+    tag_start = 552 - (len(tag_lines) - 1) * tag_lh / 2
+    return f"""{_card_open(GOLD)}
+  <rect x="30" y="30" width="{CARD_WIDTH-60}" height="150" fill="{GOLD}" rx="{PAGE_CORNER}" ry="{PAGE_CORNER}"/>
+  {num_badge(str(beat), 105, 105, 42, "white", GOLD_DK)}
+  <text x="172" y="78" font-size="24" fill="rgba(255,255,255,0.85)" font-family="Arial" font-weight="bold">STORY</text>
+  <text x="{CARD_WIDTH/2 + 40}" y="156" font-size="{name_size}" fill="white" text-anchor="middle" font-family="Arial" font-weight="bold">{xesc(name)}</text>
+  {eyeball_compass(_compass_rec(lat, lon), CARD_WIDTH/2, 360, 145, vcolor)}
+  {tspans(tag_lines, CARD_WIDTH/2, tag_start, tag_lh, font_size=str(tag_f), fill=INK, text_anchor="middle", font_family="Arial", font_style="italic")}
+  <text x="{CARD_WIDTH/2}" y="700" font-size="28" fill="{GOLD_DK}" text-anchor="middle" font-family="Arial" font-weight="bold">Hero's Arc: {xesc(stage)}</text>
+  <rect x="30" y="850" width="{CARD_WIDTH-60}" height="92" fill="{DARK_BAND}" rx="{PAGE_CORNER}" ry="{PAGE_CORNER}"/>
+  <text x="{CARD_WIDTH/2}" y="892" font-size="27" fill="white" text-anchor="middle" font-family="Arial" font-weight="bold">Beat {beat} &#183; @LAT{lat}LON{lon}</text>
+  <text x="{CARD_WIDTH/2}" y="924" font-size="22" fill="rgb(200,200,205)" text-anchor="middle" font-family="Arial">valence {'+' if val == 'pos' else '−'}</text>
+  {band}
+  <text x="{CARD_WIDTH/2}" y="1056" font-size="17" fill="rgb(150,148,142)" text-anchor="middle" font-family="Arial">Story Track &#183; {xesc(db_name)}</text>
+{_card_close(GOLD)}"""
+
+
+def character_front_svg(spec, db_name: str) -> str:
+    name, disp, lat, lon, reaches, strains, quote = spec
+    vcolor = POS_COLOR if lat >= 0 else NEG_COLOR
+    name_size = 56 if len(name) <= 14 else 46
+    tag_lines, tag_f = fit_tagline(quote)
+    tag_lh = round(tag_f * 1.28, 1)
+    tag_start = 552 - (len(tag_lines) - 1) * tag_lh / 2
+    return f"""{_card_open(BLUE)}
+  <rect x="30" y="30" width="{CARD_WIDTH-60}" height="150" fill="{BLUE}" rx="{PAGE_CORNER}" ry="{PAGE_CORNER}"/>
+  <rect x="48" y="50" width="240" height="40" fill="white" rx="20" ry="20"/>
+  <text x="168" y="78" font-size="24" fill="{BLUE}" text-anchor="middle" font-family="Arial" font-weight="bold">CHARACTER</text>
+  <text x="{CARD_WIDTH/2}" y="158" font-size="{name_size}" fill="white" text-anchor="middle" font-family="Arial" font-weight="bold">{xesc(name)}</text>
+  {eyeball_compass(_compass_rec(lat, lon), CARD_WIDTH/2, 360, 145, vcolor)}
+  {tspans(tag_lines, CARD_WIDTH/2, tag_start, tag_lh, font_size=str(tag_f), fill=INK, text_anchor="middle", font_family="Arial", font_style="italic")}
+  <text x="{CARD_WIDTH/2}" y="700" font-size="30" fill="{BLUE_DK}" text-anchor="middle" font-family="Arial" font-weight="bold">Disposition: {xesc(disp.upper())}</text>
+  <rect x="30" y="850" width="{CARD_WIDTH-60}" height="92" fill="{DARK_BAND}" rx="{PAGE_CORNER}" ry="{PAGE_CORNER}"/>
+  <text x="60" y="892" font-size="26" fill="{POS_COLOR}" font-family="Arial" font-weight="bold">Reaches: <tspan fill="white">{xesc(reaches)}</tspan></text>
+  <text x="60" y="926" font-size="20" fill="rgb(200,200,205)" font-family="Arial">play for free (+Swing if clean)</text>
+  <rect x="30" y="952" width="{CARD_WIDTH-60}" height="78" fill="{DARK_BAND_2}" rx="{PAGE_CORNER}" ry="{PAGE_CORNER}"/>
+  <text x="60" y="994" font-size="26" fill="{NEG_COLOR}" font-family="Arial" font-weight="bold">Strains: <tspan fill="white">{xesc(strains)}</tspan></text>
+  <text x="60" y="1020" font-size="18" fill="rgb(180,180,186)" font-family="Arial">costs +1 Drift to play</text>
+  <text x="{CARD_WIDTH/2}" y="1056" font-size="17" fill="rgb(150,148,142)" text-anchor="middle" font-family="Arial">@LAT{lat}LON{lon} &#183; {xesc(db_name)}</text>
+{_card_close(BLUE)}"""
+
+
+def part_front_svg(spec, copy_idx: int, db_name: str) -> str:
+    name, mask, line1, line2, _copies = spec
+    pips = ""
+    for i in range(1, 5):
+        on = i in mask
+        cx = CARD_WIDTH / 2 - 195 + (i - 1) * 130
+        pips += num_badge(
+            str(i), cx, 380, 52,
+            SLATE if on else "rgb(225,223,218)",
+            "white" if on else "rgb(150,148,142)",
+            stroke=SLATE_DK if on else "rgb(200,198,192)",
+        )
+    mask_label = " ".join(str(b) for b in range(1, 5) if b in mask)
+    return f"""{_card_open(SLATE)}
+  <rect x="30" y="30" width="{CARD_WIDTH-60}" height="150" fill="{SLATE}" rx="{PAGE_CORNER}" ry="{PAGE_CORNER}"/>
+  <rect x="48" y="50" width="130" height="40" fill="white" rx="20" ry="20"/>
+  <text x="113" y="78" font-size="24" fill="{SLATE}" text-anchor="middle" font-family="Arial" font-weight="bold">PART</text>
+  <text x="{CARD_WIDTH/2}" y="158" font-size="60" fill="white" text-anchor="middle" font-family="Arial" font-weight="bold">{xesc(name)}</text>
+  <text x="{CARD_WIDTH/2}" y="290" font-size="28" fill="{SLATE_DK}" text-anchor="middle" font-family="Arial" font-weight="bold">beat_mask</text>
+  {pips}
+  <text x="{CARD_WIDTH/2}" y="470" font-size="26" fill="rgb(110,108,104)" text-anchor="middle" font-family="Arial">beats: {mask_label}</text>
+  <text x="{CARD_WIDTH/2}" y="640" font-size="30" fill="{INK}" text-anchor="middle" font-family="Arial">{xesc(line1)}</text>
+  <text x="{CARD_WIDTH/2}" y="684" font-size="30" fill="{INK}" text-anchor="middle" font-family="Arial">{xesc(line2)}</text>
+  <rect x="30" y="850" width="{CARD_WIDTH-60}" height="92" fill="{DARK_BAND}" rx="{PAGE_CORNER}" ry="{PAGE_CORNER}"/>
+  <text x="{CARD_WIDTH/2}" y="908" font-size="26" fill="white" text-anchor="middle" font-family="Arial">Deal 1 per player each story</text>
+  <text x="{CARD_WIDTH/2}" y="1056" font-size="17" fill="rgb(150,148,142)" text-anchor="middle" font-family="Arial">Part &#183; copy {copy_idx} &#183; {xesc(db_name)}</text>
+{_card_close(SLATE)}"""
+
+
+def reference_front_svg(db_name: str) -> str:
+    body = []
+    y0 = 248
+    lh = 30
+    for i, ln in enumerate(PULSE_REFERENCE_LINES):
+        body.append(
+            f'<text x="56" y="{y0 + i*lh}" font-size="22" fill="rgb(230,230,234)" '
+            f'font-family="Courier New, monospace">{xesc(ln)}</text>'
+        )
+    return f"""<svg width="{CARD_WIDTH}" height="{CARD_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
+  <rect x="5" y="5" width="{CARD_WIDTH-10}" height="{CARD_HEIGHT-10}" fill="{DARK_BAND}" rx="{CARD_CORNER}" ry="{CARD_CORNER}"/>
+  <rect x="30" y="30" width="{CARD_WIDTH-60}" height="170" fill="rgb(70,70,80)" rx="{PAGE_CORNER}" ry="{PAGE_CORNER}"/>
+  <text x="{CARD_WIDTH/2}" y="110" font-size="40" fill="white" text-anchor="middle" font-family="Arial" font-weight="bold">PULSE</text>
+  <text x="{CARD_WIDTH/2}" y="160" font-size="28" fill="rgb(200,200,205)" text-anchor="middle" font-family="Arial">QUICK REFERENCE</text>
+  {''.join(body)}
+  <text x="{CARD_WIDTH/2}" y="1052" font-size="17" fill="rgb(140,140,148)" text-anchor="middle" font-family="Arial">Reference &#183; {xesc(db_name)}</text>
+  <rect x="5" y="5" width="{CARD_WIDTH-10}" height="{CARD_HEIGHT-10}" fill="none" stroke="black" stroke-width="8" rx="{CARD_CORNER}" ry="{CARD_CORNER}"/>
+</svg>
+"""
+
+
+def build_pulse_jobs(by_title: dict, coord2name: dict, db_name: str) -> list[tuple[str, str]]:
+    """Build the full 57-card Pulse set as (slug, front_svg) jobs, in cut-list order."""
+    jobs: list[tuple[str, str]] = []
+    # 1. Story Track ×6
+    for spec in PULSE_STORY:
+        jobs.append((f"story_{spec[0]}_{slugify(spec[1])}", story_front_svg(spec, db_name)))
+    # 2. Character ×5
+    for spec in PULSE_CHARS:
+        jobs.append((f"char_{slugify(spec[0])}", character_front_svg(spec, db_name)))
+    # 3. Part ×8 (2 copies each)
+    for spec in PULSE_PARTS:
+        for c in range(1, spec[4] + 1):
+            jobs.append((f"part_{slugify(spec[0])}_{c}", part_front_svg(spec, c, db_name)))
+    # 4. Feeling ×32 (TTDB-driven, with copies)
+    for title, copies in PULSE_FEELINGS:
+        rec = by_title.get(title)
+        if rec is None:
+            print(f"  ! feeling '{title}' not found in TTDB — skipped")
+            continue
+        svg = card_front_svg(rec, coord2name, db_name)
+        for c in range(1, copies + 1):
+            jobs.append((f"feeling_{slugify(title)}_{c}", svg))
+    # 5. Reference ×6
+    ref_svg = reference_front_svg(db_name)
+    for c in range(1, PULSE_REFERENCE + 1):
+        jobs.append((f"reference_{c}", ref_svg))
+    return jobs
+
+
 # --- Main ---------------------------------------------------------------------------
 def main() -> None:
     ap = argparse.ArgumentParser(description="Generate Feeling cards from a Feelings TTDB.")
@@ -502,18 +744,24 @@ def main() -> None:
     cards = [r for r in records if is_card(r)]
     if not cards:
         raise ValueError("No Feeling cards found (no records with a Category field).")
+    by_title = {r["title"]: r for r in cards}
 
-    if deck["cards"] is not None:
-        by_title = {r["title"]: r for r in cards}
-        ordered = []
-        for title in deck["cards"]:
-            if title in by_title:
-                ordered.append(by_title[title])
-            else:
-                print(f"  ! '{title}' not found in TTDB — skipped")
-        if not ordered:
-            raise ValueError(f"No matching cards for deck '{args.deck}'.")
-        cards = ordered
+    # Build the render jobs: a list of (unique-slug, front-SVG) pairs.
+    jobs: list[tuple[str, str]] = []
+    if deck.get("composition") == "pulse":
+        jobs = build_pulse_jobs(by_title, coord2name, db_name)
+    else:
+        if deck["cards"] is not None:
+            ordered = []
+            for title in deck["cards"]:
+                if title in by_title:
+                    ordered.append(by_title[title])
+                else:
+                    print(f"  ! '{title}' not found in TTDB — skipped")
+            if not ordered:
+                raise ValueError(f"No matching cards for deck '{args.deck}'.")
+            cards = ordered
+        jobs = [(slugify(r["title"]), card_front_svg(r, coord2name, db_name)) for r in cards]
 
     slug = slugify(deck_label)
     out_base = (base / args.out_dir).resolve()
@@ -523,20 +771,19 @@ def main() -> None:
     for d in (cards_dir, pages_dir):
         d.mkdir(parents=True, exist_ok=True)
 
-    print(f"Deck '{deck_label}': {len(cards)} cards from {ttdb_path.name}")
+    print(f"Deck '{deck_label}': {len(jobs)} cards from {ttdb_path.name}")
 
     # 1. individual card PNGs
     card_pngs: list[Path] = []
-    for rec in cards:
-        cslug = slugify(rec["title"])
+    for cslug, front_svg in jobs:
         svg_p = cards_dir / f"{cslug}.svg"
         png_p = cards_dir / f"{cslug}.png"
-        svg_p.write_text(card_front_svg(rec, coord2name, db_name), encoding="utf-8")
+        svg_p.write_text(front_svg, encoding="utf-8")
         svg_to_png(svg_p, png_p)
         card_pngs.append(png_p)
         if not args.keep_svgs:
             svg_p.unlink(missing_ok=True)
-        print(f"  card: {rec['title']}")
+        print(f"  card: {cslug}")
 
     # 2. back card
     back_svg = cards_dir / "_back.svg"

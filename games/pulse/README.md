@@ -8,7 +8,7 @@ cd tools/feelings_cards && python generate_feelings_cards.py --deck pulse
 ```
 
 ## Contents
-- **Pulse_Deck.pdf** — the card deck: 15 cards across 2 front page(s),
+- **Pulse_Deck.pdf** — the card deck: 57 cards across 7 front page(s),
   each followed by a matching card back for **duplex** printing.
 - **Pulse_Rules.pdf** — the full rules booklet.
 - **README.md** — this file.
