@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="240" viewBox="0 0 220 240">
+  <!-- DRIFT TOKEN  ·  20 mm cube  ·  qty 12  ·  sloppy / strained play -->
+  <defs>
+    <linearGradient id="cubeTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#c7ccd2"/>
+      <stop offset="100%" stop-color="#aab1b8"/>
+    </linearGradient>
+    <linearGradient id="cubeLeft" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#7d858d"/>
+      <stop offset="100%" stop-color="#6a727a"/>
+    </linearGradient>
+    <linearGradient id="cubeRight" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#9aa1a8"/>
+      <stop offset="100%" stop-color="#828a92"/>
+    </linearGradient>
+  </defs>
+
+  <!-- isometric cube (already a 3D form: extrude/print as a solid 20mm cube) -->
+  <!-- top face -->
+  <polygon points="110,34 178,74 110,114 42,74" fill="url(#cubeTop)" stroke="#5b6269" stroke-width="3" stroke-linejoin="round"/>
+  <!-- left face -->
+  <polygon points="42,74 110,114 110,196 42,156" fill="url(#cubeLeft)" stroke="#5b6269" stroke-width="3" stroke-linejoin="round"/>
+  <!-- right face -->
+  <polygon points="178,74 110,114 110,196 178,156" fill="url(#cubeRight)" stroke="#5b6269" stroke-width="3" stroke-linejoin="round"/>
+
+  <!-- drift "tilt" arrows engraved on the faces (recessed marks) -->
+  <path d="M70 110 L92 122 M92 122 L86 116 M92 122 L84 124" fill="none" stroke="#4f565c" stroke-width="3" stroke-linecap="round"/>
+  <path d="M150 110 L128 122 M128 122 L134 116 M128 122 L136 124" fill="none" stroke="#4f565c" stroke-width="3" stroke-linecap="round"/>
+  <!-- tilde / drift glyph on top face -->
+  <path d="M86 74 q8 -10 16 0 q8 10 16 0" fill="none" stroke="#5b6269" stroke-width="3.5" stroke-linecap="round"/>
+
+  <!-- label -->
+  <text x="110" y="222" text-anchor="middle" font-family="Georgia, serif"
+        font-size="22" letter-spacing="3" fill="#5b6269">DRIFT</text>
+  <text x="110" y="238" text-anchor="middle" font-family="Georgia, serif"
+        font-size="12" letter-spacing="1" fill="#6a727a">20 mm cube · ×12</text>
+</svg>

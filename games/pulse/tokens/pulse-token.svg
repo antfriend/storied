@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="240" viewBox="0 0 220 240">
+  <!-- PULSE TOKEN  ·  ~20 mm disc  ·  qty 7  ·  the band's "life" -->
+  <defs>
+    <radialGradient id="discRed" cx="42%" cy="38%" r="70%">
+      <stop offset="0%" stop-color="#ff6b6b"/>
+      <stop offset="55%" stop-color="#e23a3a"/>
+      <stop offset="100%" stop-color="#a11d1d"/>
+    </radialGradient>
+    <linearGradient id="heartHi" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff3f3"/>
+      <stop offset="100%" stop-color="#ffd2d2"/>
+    </linearGradient>
+  </defs>
+
+  <!-- footprint / extrusion outline -->
+  <circle cx="110" cy="100" r="92" fill="none" stroke="#7a1414" stroke-width="2" stroke-dasharray="4 5" opacity="0.5"/>
+  <!-- disc body (top face) -->
+  <circle cx="110" cy="100" r="86" fill="url(#discRed)" stroke="#7a1414" stroke-width="3"/>
+  <!-- bevel ring (hints at extrusion height when raised to STL) -->
+  <circle cx="110" cy="100" r="72" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.25"/>
+
+  <!-- raised heart relief (becomes the embossed top in STL) -->
+  <path d="M110 148
+           C 78 122, 56 104, 56 80
+           C 56 62, 70 50, 86 50
+           C 98 50, 106 58, 110 66
+           C 114 58, 122 50, 134 50
+           C 150 50, 164 62, 164 80
+           C 164 104, 142 122, 110 148 Z"
+        fill="url(#heartHi)" stroke="#7a1414" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- pulse-line engraving across the heart (recessed groove) -->
+  <path d="M70 92 L92 92 L100 74 L112 110 L120 92 L150 92"
+        fill="none" stroke="#c0303a" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- label -->
+  <text x="110" y="220" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif"
+        font-size="22" letter-spacing="3" fill="#a11d1d">PULSE</text>
+  <text x="110" y="236" text-anchor="middle" font-family="Georgia, serif"
+        font-size="12" letter-spacing="1" fill="#7a1414">20 mm disc · ×7</text>
+</svg>

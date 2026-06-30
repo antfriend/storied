@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="1120" height="420" viewBox="0 0 1120 420">
+  <!-- PULSE — token & accessory prototypes (metronome excluded) -->
+  <rect width="1120" height="420" fill="#faf7f0"/>
+  <text x="40" y="44" font-family="Georgia, serif" font-size="26" fill="#2b2b2b">Pulse — token &amp; accessory prototypes</text>
+  <text x="40" y="68" font-family="Georgia, serif" font-size="14" fill="#777">2D candidates to enhance into 3D STL · dashed line = print/extrusion footprint · metronome excluded</text>
+
+  <g transform="translate(20,84)">
+    <image href="pulse-token.svg"  xlink:href="pulse-token.svg"  x="0"   y="0" width="220" height="240"/>
+    <image href="drift-token.svg"  xlink:href="drift-token.svg"  x="220" y="0" width="220" height="240"/>
+    <image href="swing-token.svg"  xlink:href="swing-token.svg"  x="440" y="0" width="220" height="240"/>
+    <image href="baton.svg"        xlink:href="baton.svg"        x="660" y="6" width="200" height="300"/>
+    <image href="story-marker.svg" xlink:href="story-marker.svg" x="880" y="6" width="200" height="300"/>
+  </g>
+</svg>

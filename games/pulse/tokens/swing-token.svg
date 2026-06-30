@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="240" viewBox="0 0 220 240">
+  <!-- SWING TOKEN  ·  ~22 mm star  ·  qty 3  ·  clean-play reward -->
+  <defs>
+    <radialGradient id="gold" cx="40%" cy="35%" r="75%">
+      <stop offset="0%" stop-color="#fff1b8"/>
+      <stop offset="50%" stop-color="#f4c430"/>
+      <stop offset="100%" stop-color="#c8920a"/>
+    </radialGradient>
+    <linearGradient id="goldFacet" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffe57a"/>
+      <stop offset="100%" stop-color="#d9a51a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- footprint outline -->
+  <circle cx="110" cy="100" r="90" fill="none" stroke="#9a7308" stroke-width="2" stroke-dasharray="4 5" opacity="0.4"/>
+
+  <!-- 5-point star (extrude to a faceted star prism in STL) -->
+  <polygon points="110,16 134,76 199,76 146,116 166,180 110,140 54,180 74,116 21,76 86,76"
+           fill="url(#gold)" stroke="#9a7308" stroke-width="3.5" stroke-linejoin="round"/>
+  <!-- inner ridge lines = the raised facet edges (each point pitched up to a center peak) -->
+  <g stroke="#9a7308" stroke-width="1.6" opacity="0.55" fill="none">
+    <line x1="110" y1="100" x2="110" y2="16"/>
+    <line x1="110" y1="100" x2="199" y2="76"/>
+    <line x1="110" y1="100" x2="166" y2="180"/>
+    <line x1="110" y1="100" x2="54" y2="180"/>
+    <line x1="110" y1="100" x2="21" y2="76"/>
+    <line x1="110" y1="100" x2="134" y2="76"/>
+    <line x1="110" y1="100" x2="146" y2="116"/>
+    <line x1="110" y1="100" x2="74" y2="116"/>
+    <line x1="110" y1="100" x2="86" y2="76"/>
+  </g>
+  <!-- swing "lay-back" curve engraved in the core -->
+  <path d="M92 100 q18 -16 36 0" fill="none" stroke="#fff7d6" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- label -->
+  <text x="110" y="222" text-anchor="middle" font-family="Georgia, serif"
+        font-size="22" letter-spacing="3" fill="#9a7308">SWING</text>
+  <text x="110" y="238" text-anchor="middle" font-family="Georgia, serif"
+        font-size="12" letter-spacing="1" fill="#b8860b">22 mm star · ×3</text>
+</svg>
