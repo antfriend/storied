@@ -50,6 +50,25 @@ CATEGORY_TINT = {
     "Intent": "rgb(40, 150, 138)",
 }
 
+# --- Decks --------------------------------------------------------------------------
+# A deck selects (and orders) which TTDB cards print. `cards: None` = the whole field.
+# Pulse pulls only what games/Pulse.md uses: the 6 Hero's-Arc beats, the near-neighbor
+# hand cards, and the 5 character dispositions — in play order.
+DECKS: dict[str, dict] = {
+    "feelings": {"name": "Feelings", "cards": None},
+    "pulse": {
+        "name": "Pulse",
+        "cards": [
+            # Story Track — the Hero's Arc, in beat order (Pulse.md §2.1)
+            "Serenity", "Unease", "Fear", "Grief", "Hope", "Joy",
+            # Hand near-neighbors (Pulse.md §2.4)
+            "Contentment", "Melancholy", "Frustration", "Excitement",
+            # Character dispositions as classes (Pulse.md §2.2)
+            "Curiosity", "Suspicion", "Compassion", "Equanimity", "Indifference",
+        ],
+    },
+}
+
 # Edge types that are part of the affective "combo" system (worth printing).
 # umwelt-anchoring edges (feels/emotes/is_*_of) and reverse links are dropped.
 EDGE_LABELS = {
@@ -326,12 +345,12 @@ def card_front_svg(rec: dict, coord2name: dict[str, str], db_name: str) -> str:
 """
 
 
-def card_back_svg(db_name: str) -> str:
+def card_back_svg(db_name: str, deck_label: str = "Feelings") -> str:
     cx, cy = CARD_WIDTH / 2, CARD_HEIGHT / 2 - 40
     return f"""<svg width="{CARD_WIDTH}" height="{CARD_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
   <rect x="5" y="5" width="{CARD_WIDTH-10}" height="{CARD_HEIGHT-10}" fill="{DARK_BAND}" rx="{CARD_CORNER}" ry="{CARD_CORNER}"/>
   <text x="{cx}" y="180" font-size="56" fill="white" text-anchor="middle" font-family="Arial" font-weight="bold">TOOT TOOT</text>
-  <text x="{cx}" y="240" font-size="44" fill="rgb(200,200,205)" text-anchor="middle" font-family="Arial">FEELINGS</text>
+  <text x="{cx}" y="240" font-size="44" fill="rgb(200,200,205)" text-anchor="middle" font-family="Arial">{xesc(deck_label.upper())}</text>
 
   <circle cx="{cx}" cy="{cy}" r="150" fill="rgb(70,70,80)" stroke="rgb(110,110,122)" stroke-width="3"/>
   <line x1="{cx-150}" y1="{cy}" x2="{cx+150}" y2="{cy}" stroke="rgb(96,96,108)" stroke-width="2"/>
@@ -408,10 +427,14 @@ def assemble_pdf(front_pages: list[Path], back_page: Path, out_pdf: Path) -> Non
 def main() -> None:
     ap = argparse.ArgumentParser(description="Generate Feeling cards from a Feelings TTDB.")
     ap.add_argument("--ttdb", default="../../reference/feelings_ttdb.md", help="Path to the Feelings TTDB markdown.")
-    ap.add_argument("--deck-name", default="Feelings", help="Deck name (used for output folders).")
+    ap.add_argument("--deck", default="feelings", choices=sorted(DECKS),
+                    help="Which deck to print (feelings = whole field; pulse = Pulse subset).")
     ap.add_argument("--out-dir", default="build", help="Base output directory.")
     ap.add_argument("--keep-svgs", action="store_true", help="Keep intermediate SVGs.")
     args = ap.parse_args()
+
+    deck = DECKS[args.deck]
+    deck_label = deck["name"]
 
     base = Path(__file__).resolve().parent
     ttdb_path = (base / args.ttdb).resolve() if not Path(args.ttdb).is_absolute() else Path(args.ttdb)
@@ -428,7 +451,19 @@ def main() -> None:
     if not cards:
         raise ValueError("No Feeling cards found (no records with a Category field).")
 
-    slug = slugify(args.deck_name)
+    if deck["cards"] is not None:
+        by_title = {r["title"]: r for r in cards}
+        ordered = []
+        for title in deck["cards"]:
+            if title in by_title:
+                ordered.append(by_title[title])
+            else:
+                print(f"  ! '{title}' not found in TTDB — skipped")
+        if not ordered:
+            raise ValueError(f"No matching cards for deck '{args.deck}'.")
+        cards = ordered
+
+    slug = slugify(deck_label)
     out_base = (base / args.out_dir).resolve()
     cards_dir = out_base / "cards" / slug
     pages_dir = out_base / "pages" / slug
@@ -436,7 +471,7 @@ def main() -> None:
     for d in (cards_dir, pages_dir):
         d.mkdir(parents=True, exist_ok=True)
 
-    print(f"Found {len(cards)} feeling cards in {ttdb_path.name}")
+    print(f"Deck '{deck_label}': {len(cards)} cards from {ttdb_path.name}")
 
     # 1. individual card PNGs
     card_pngs: list[Path] = []
@@ -454,7 +489,7 @@ def main() -> None:
     # 2. back card
     back_svg = cards_dir / "_back.svg"
     back_png = cards_dir / "_back.png"
-    back_svg.write_text(card_back_svg(db_name), encoding="utf-8")
+    back_svg.write_text(card_back_svg(db_name, deck_label), encoding="utf-8")
     svg_to_png(back_svg, back_png)
     if not args.keep_svgs:
         back_svg.unlink(missing_ok=True)
